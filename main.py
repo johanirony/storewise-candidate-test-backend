@@ -12,31 +12,15 @@ class PurchaseItem(object):
 
 
 def get_total_order_amount(order: List[PurchaseItem]):
-
-    """
-    The total cost of all the items ordered
-    """
-
-    raise NotImplementedError(
-        "REMOVE the error and RETURN the total amount for the order"
-    )
+    total_amount = sum(item.price for item in order)
+    return total_amount
 
 
 def get_service_charge(order: List[PurchaseItem]):
-
-    """
-    For every Rs. 100, the service charge amount should increase by 1% of order amount, upto a max of 20%
-    Eg:
-        Order Amount = 80, Service Charge = 0
-        Order Amount = 150, Service Charge = 1.5
-        Order Amount = 800, Service Charge = 64
-        Order Amount = 1500, Service Charge = 225
-        Order Amount = 3000, Service Charge = 600
-    """
-
-    raise NotImplementedError(
-        "REMOVE the error and RETURN service charge amount for the order"
-    )
+    total_amount = get_total_order_amount(order)
+    service_charge_percentage = min((total_amount // 100) * 0.01, 0.20)
+    service_charge = total_amount * service_charge_percentage
+    return service_charge
 
 
 class Option(object):
@@ -47,9 +31,9 @@ class Option(object):
         if d:
             self.n = d.get("name")
             self.p = d.get("price")
-        if self.p == None:
+        if self.p is None:
             self.p = 0
-        if self.n == None:
+        if self.n is None:
             raise AttributeError
         self.pu = self.pu if self.pu else "Rs."
 
@@ -109,7 +93,7 @@ def print_order(order):
     )
     for i, item in enumerate(order):
         utils.cprint(
-            f"{i+1}. {item.name}",
+            f"{i + 1}. {item.name}",
             color=colors.foreground["yellow"],
             on=colors.background["green"],
         )
@@ -131,51 +115,48 @@ def print_order(order):
     )
 
 
-print()
-utils.cprint(
-    "Welcome to McDonalds on your shell :)",
-    color=colors.foreground["blue"],
-    on=colors.background["white"],
-)
-utils.cprint(
-    "Here you can place your order        ",
-    color=colors.foreground["blue"],
-    on=colors.background["white"],
-)
-utils.cprint(
-    "And then we will show you your bill  ",
-    color=colors.foreground["blue"],
-    on=colors.background["white"],
-)
-print()
-order = []
-while True:
-    options = list(map(lambda x: str(x), MCDONALDS_FOOD_OPTIONS))
-    bullet = Bullet(prompt="Add an item", choices=options, bullet="=> ")
-    result = bullet.launch()
-    utils.clearConsoleUp(7)
-    option = get_option_from_result(result, MCDONALDS_FOOD_OPTIONS)
-    if result == str(MCDONALDS_FOOD_OPTIONS[-1]):
-        break
-    order.append(PurchaseItem(option))
+def add_item_to_order(order, options, prompt):
+    while True:
+        option_strings = list(map(lambda x: str(x), options))
+        bullet = Bullet(prompt=prompt, choices=option_strings, bullet="=> ")
+        result = bullet.launch()
+        utils.clearConsoleUp(7)
+        option = get_option_from_result(result, options)
+        if result == str(options[-1]):
+            break
+        order.append(PurchaseItem(option))
+        utils.cprint(
+            f"{result} is added to your order", on=colors.background["green"], end="\n"
+        )
+
+
+def main():
+    print()
     utils.cprint(
-        f"{result} is added to your order", on=colors.background["green"], end="\n"
+        "Welcome to McDonalds on your shell :)",
+        color=colors.foreground["blue"],
+        on=colors.background["white"],
     )
-
-while True:
-    options = list(map(lambda x: str(x), MCDONALDS_BEVERAGES_OPTIONS))
-    bullet = Bullet(prompt="Add a beverage", choices=options, bullet="=> ")
-    result = bullet.launch()
-    utils.clearConsoleUp(7)
-    option = get_option_from_result(result, MCDONALDS_BEVERAGES_OPTIONS)
-    if result == str(MCDONALDS_BEVERAGES_OPTIONS[-1]):
-        break
-    order.append(PurchaseItem(option))
     utils.cprint(
-        f"{result} is added to your order", on=colors.background["green"], end="\n"
+        "Here you can place your order        ",
+        color=colors.foreground["blue"],
+        on=colors.background["white"],
     )
+    utils.cprint(
+        "And then we will show you your bill  ",
+        color=colors.foreground["blue"],
+        on=colors.background["white"],
+    )
+    print()
+    order = []
 
-utils.clearConsoleUp(1)
-print()
+    add_item_to_order(order, MCDONALDS_FOOD_OPTIONS, "Add a food item")
+    add_item_to_order(order, MCDONALDS_BEVERAGES_OPTIONS, "Add a beverage")
 
-print_order(order)
+    utils.clearConsoleUp(1)
+    print()
+    print_order(order)
+
+
+if __name__ == "__main__":
+    main()
